@@ -1,0 +1,21 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "check-env": "node check-env.js",
+    "deploy:sepolia": "pnpm check-env && hardhat run scripts/deploy.js --network sepolia"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.4",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.0.0",
+    "@types/chai": "^4.3.20",
+    "chai": "^4.5.0",
+    "dotenv": "^16.6.1",
+    "hardhat": "^2.25.0"
+  }
+}

@@ -1,0 +1,40 @@
+## Applies to monorepo and its sub-projects (React and Contracts)
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node modules
+node_modules
+
+# Build output
+dist
+dist-ssr
+
+# Local environment settings
+*.local
+.env
+.env.local
+.env.*.local
+
+# Hardhat artifacts & cache
+artifacts/
+cache/
+coverage/
+.nyc_output/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
