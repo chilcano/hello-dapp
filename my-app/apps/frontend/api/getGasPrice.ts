@@ -6,8 +6,9 @@ const provider = new ethers.JsonRpcProvider(ALCHEMY_URL);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const gasPrice = await provider.getGasPrice();
-    res.status(200).json({ gasPrice: gasPrice.toString() });
+    const feeData = await provider.getFeeData();
+    const gasPrice = feeData.gasPrice?.toString() ?? null;
+    res.status(200).json({ gasPrice });
   } catch (error) {
     res.status(500).json({ error: 'Error fetching gas price' });
   }

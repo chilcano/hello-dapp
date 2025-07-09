@@ -165,7 +165,7 @@ function App() {
     try {
       const res = await fetch('/api/getGasPrice');
       const data = await res.json();
-      setGasPrice(data.gasPrice);
+      setGasPrice(data.gasPrice ?? 'Not available');
       setGasPriceApiVisible(true);
     } catch {
       setGasPrice(null);
