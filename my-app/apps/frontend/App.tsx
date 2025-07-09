@@ -40,6 +40,10 @@ function App() {
   const [newMessage, setNewMessage] = useState<string>('');
   const [updateSuccess, setUpdateSuccess] = useState<boolean>(false);
 
+  // States for gas price serverless API
+  const [gasPrice, setGasPrice] = useState<string | null>(null);
+  const [gasPriceApiVisible, setGasPriceApiVisible] = useState(false);
+
   // Connect wallet and load current message
   const connectWalletAndLoadMessage = async () => {
     if (!window.ethereum) {
@@ -135,7 +139,7 @@ function App() {
   // Function to fetch last block number via backend (secure)
   const fetchLastBlockBackend = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/getLastBlock');
+      const res = await fetch('/api/getLastBlock');
       const data = await res.json();
       setLastBlock(data.blockNumber);
       setBackendUrlVisible(true);
@@ -156,20 +160,42 @@ function App() {
     }
   };
 
+  // Function to fetch gas price via serverless API
+  const fetchGasPrice = async () => {
+    try {
+      const res = await fetch('/api/getGasPrice');
+      const data = await res.json();
+      setGasPrice(data.gasPrice);
+      setGasPriceApiVisible(true);
+    } catch {
+      setGasPrice(null);
+      setGasPriceApiVisible(false);
+    }
+  };
+
   return (
     <div style={{ padding: 20, fontFamily: 'Arial, sans-serif', maxWidth: 600 }}>
       <h1>📨 Hello dApp</h1>
 
       {/* Message Interaction Section */}
       <section style={{ marginBottom: 20, borderBottom: '1px solid #ccc', paddingBottom: 15 }}>
-        <h3>Call to Smart Contract</h3>
-
-        <button onClick={connectWalletAndLoadMessage} style={{ marginTop: 8, marginRight: 12 }}>[ Connect Wallet to load previous message ]</button>
-        <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type new message" style={{ marginRight: 8 }} />
-        <button onClick={updateMessage}>[ Update Message ]</button>
-
-        {updateSuccess && (<p style={{ color: 'green', marginTop: 8 }}>✅ Message updated!</p>)}
-  
+        <h3>📒 Use Smart Contract</h3>
+        <button onClick={connectWalletAndLoadMessage} style={{ marginTop: 8, marginRight: 12 }}>
+          Connect Wallet & Load Message
+        </button>
+        <input
+          type="text"
+          value={newMessage}
+          onChange={e => setNewMessage(e.target.value)}
+          placeholder="Type new message"
+          style={{ marginRight: 8 }}
+        />
+        <button onClick={updateMessage}>Update Message</button>
+        {updateSuccess && (
+          <p style={{ color: 'green', marginTop: 8 }}>
+            ✅ Message updated!
+          </p>
+        )}
         <p style={{ marginTop: 10, fontStyle: 'italic' }}>{currentMessage}</p>
       </section>
 
@@ -177,7 +203,7 @@ function App() {
       <section style={{ marginBottom: 20, borderBottom: '1px solid #ccc', paddingBottom: 15 }}>
         <h3>🔐 Connected Wallet Info</h3>
         <p><strong>Address:</strong> {userAddress || 'Not connected'}</p>
-        <button onClick={fetchBalanceMetaMask}>[ Get Balance (via MetaMask) ]</button>
+        <button onClick={fetchBalanceMetaMask}>Get Balance (via MetaMask)</button>
         {balanceMetaMask && <p>Balance: {balanceMetaMask} ETH</p>}
       </section>
 
@@ -186,7 +212,7 @@ function App() {
         <h3>🌐 Call to 3rd Party Service</h3>
 
         <div style={{ marginBottom: 10 }}>
-          <button onClick={fetchBalanceAlchemy}>[ Get Balance (via Alchemy · insecurely) ]</button>
+          <button onClick={fetchBalanceAlchemy}>Get Balance (via Alchemy · insecurely)</button>
           {alchemyError && <p style={{ color: 'red' }}>{alchemyError}</p>}
           {balanceAlchemy && <p>Balance: {balanceAlchemy} ETH</p>}
           {rpcUrlVisible && (
@@ -196,12 +222,23 @@ function App() {
           )}
         </div>
 
-        <div>
-          <button onClick={fetchLastBlockBackend}>[ Get Last Block (via Backend · securely) ]</button>
+        <div style={{ marginBottom: 10 }}>
+          <button onClick={fetchLastBlockBackend}>Get Last Block (via Backend · securely)</button>
           {lastBlock !== null && <p>Last Block Number: {lastBlock}</p>}
           {backendUrlVisible && (
             <p style={{ fontSize: '0.8em', color: '#555' }}>
-              Backend URL: <code>http://localhost:3001/api/getLastBlock</code>
+              Backend URL: <code>/api/getLastBlock</code>
+            </p>
+          )}
+        </div>
+
+        {/* New gas price API */}
+        <div>
+          <button onClick={fetchGasPrice}>Get Gas Price (via Serverless API · securely)</button>
+          {gasPrice !== null && <p>Gas Price (wei): {gasPrice}</p>}
+          {gasPriceApiVisible && (
+            <p style={{ fontSize: '0.8em', color: '#555' }}>
+              API URL: <code>/api/getGasPrice</code>
             </p>
           )}
         </div>
@@ -210,7 +247,7 @@ function App() {
       {/* 3. Destination Contract Info */}
       <section>
         <h3>📦 Destination Contract Info (via Alchemy)</h3>
-        <button onClick={fetchContractBalance}>[ Get Contract Balance (via Alchemy · insecurely) ]</button>
+        <button onClick={fetchContractBalance}>Get Contract Balance (via Alchemy · insecurely)</button>
         {contractBalance !== null && <p>Contract Balance: {contractBalance} ETH</p>}
         <p style={{ fontSize: '0.85em', color: '#666', marginTop: 10 }}>
           (Note: This HelloWorld contract is not payable and will always have 0 ETH unless funded externally.)
