@@ -10,7 +10,8 @@ declare global {
 }
 
 const CONTRACT_ADDRESS = contractData.address;
-const ALCHEMY_URL = import.meta.env.VITE_ALCHEMY_SEPOLIA_URL;
+const ALCHEMY_URL_FROM_VITE = import.meta.env.VITE_ALCHEMY_SEPOLIA_URL;
+const BACKEND_URL_FROM_VITE = import.meta.env.VITE_BACKEND_URL || '';
 
 const ABI = [
   "function message() view returns (string)",
@@ -123,7 +124,7 @@ function App() {
         setRpcUrlVisible(false);
         return;
       }
-      const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_URL);
+      const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_URL_FROM_VITE);
       const balanceWei = await alchemyProvider.getBalance(userAddress);
       const balanceEth = ethers.formatEther(balanceWei);
       setBalanceAlchemy(balanceEth);
@@ -139,7 +140,8 @@ function App() {
   // Function to fetch last block number via backend (secure)
   const fetchLastBlockBackend = async () => {
     try {
-      const res = await fetch('/api/getLastBlock');
+      const url = BACKEND_URL_FROM_VITE ? `${BACKEND_URL_FROM_VITE}/api/getLastBlock` : '/api/getLastBlock';
+      const res = await fetch(url);
       const data = await res.json();
       setLastBlock(data.blockNumber);
       setBackendUrlVisible(true);
@@ -151,7 +153,7 @@ function App() {
   // Function to fetch contract balance via Alchemy
   const fetchContractBalance = async () => {
     try {
-      const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_URL);
+      const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_URL_FROM_VITE);
       const balanceWei = await alchemyProvider.getBalance(CONTRACT_ADDRESS);
       const balanceEth = ethers.formatEther(balanceWei);
       setContractBalance(balanceEth);
@@ -217,7 +219,7 @@ function App() {
           {balanceAlchemy && <p>Balance: {balanceAlchemy} ETH</p>}
           {rpcUrlVisible && (
             <p style={{ fontSize: '0.8em', color: '#555' }}>
-              RPC URL: <code>{ALCHEMY_URL}</code>
+              RPC URL: <code>{ALCHEMY_URL_FROM_VITE}</code>
             </p>
           )}
         </div>
