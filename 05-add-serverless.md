@@ -107,6 +107,7 @@ You will see:
 
 ```sh
 $ vercel dev
+
 Vercel CLI 44.3.0
 ? Set up and develop “~/repos/me/hello-dapp/my-app”? yes
 ? Which scope should contain your project? Wayna's projects
@@ -130,3 +131,8 @@ Auto-detected Project Settings (Vite):
   ➜  press h + enter to show help
 > Ready! Available at http://localhost:3000
 ```
+
+__Step 6. Fixing request to Backend when running with Vercel__
+
+* If running in local, the request to backend will fail with `404` error because the proxy in frontend will not work with Vercel CLI.
+* To check if backend works, only run frontend using `pnpm dev` (Vite project). This will run frontend on `http://localhost:5173/`
