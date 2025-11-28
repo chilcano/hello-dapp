@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["@synthetixio/synpress"]
+  },
+  "include": [
+    "tests/e2e/**/*.ts"
+  ]
+}

