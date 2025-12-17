@@ -2,7 +2,7 @@
 
 ## Steps
 
-__Step 1. Install deps__
+### Step 1. Install deps in apps/backend
 
 ```sh
 mkdir apps/backend && cd apps/backend
@@ -21,7 +21,7 @@ pnpm add express ethers dotenv
 pnpm add -D typescript @types/node @types/express @types/dotenv
 ```
 
-__Step 2. Create index.ts__
+### Step 2. Create apps/backend/index.ts
 
 ```ts
 import express from 'express';
@@ -52,15 +52,15 @@ app.listen(PORT, () => {
 
 ```
 
-__Step 3. Create the .env file__
+### Step 3. Create the apps/backend/.env file
 
 
 ```ini
-ALCHEMY_URL=https://eth-sepolia.g.alchemy.com/v2/tu-api-key
+ALCHEMY_URL=https://eth-sepolia.g.alchemy.com/v2/your-api-key
 PORT=3001
 ```
 
-__Step 4. Update backend/package.json__
+### Step 4. Update backend/package.json
 
 ```json
 ...
@@ -70,17 +70,18 @@ __Step 4. Update backend/package.json__
 ...
 ```
 
-__Step 4. Configure CORS in backend to work with frontend__
+### Step 4. Configure CORS in backend to work with frontend
 
-Since that backend and frontend run in different port, we should configure CORS properly.
+Since that backend and frontend run in different ports, we should configure CORS properly.
 
 This install CORS and its types in backend.
+
 ```sh
 pnpm add cors
 pnpm add -D @types/cors
 ```
 
-__Step 5. Update backend to use CORS__
+### Step 5. Update backend/index.ts to use CORS
 
 ```ts
 import cors from 'cors';
@@ -91,7 +92,7 @@ app.use(cors());
 ...
 ```
 
-__Step 6. Update frontend to call to backend__
+### Step 6. Update frontend/App.tsx to call to backend
 
 ```ts
 const fetchLastBlockFromBackend = async () => {
@@ -109,7 +110,7 @@ const fetchLastBlockFromBackend = async () => {
 <button onClick={fetchLastBlockFromBackend}>Get Last Block (via Alchemy securely)</button>
 ```
 
-__Step 7. Remove unused dependencies__
+### Step 7. Remove unused dependencies
 
 ```sh
 ## In the parent project dir or contracts/
@@ -129,7 +130,9 @@ rm -f pnpm-lock.yaml
 pnpm install
 ```
 
-__Step 8. Test the full application__
+### Step 8. Run the full application to test integration
+
+In separate terminal, run the next commands:
 
 ```sh
 cd apps/backend
@@ -137,5 +140,4 @@ pnpm start
 
 cd apps/frontend
 pnpm dev
-
 ```

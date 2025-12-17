@@ -1,4 +1,4 @@
-# 03. Deploy to Testnet and call to Alchemy
+# 03. Deploy on Testnet (Sepolia) and call to Alchemy
 
 
 ## Relevant JSON-RPC APIs
@@ -15,21 +15,21 @@ __Summary__
 
 ## Steps
 
-__Step 1. Install deps__
+### Step 1. Install deps in my-app/contracts
 
 ```sh
 cd my-app/contracts
 pnpm add -D dotenv
 ```
 
-__Step 2. .env setup__
+### Step 2. Update contracts/.env setup
 
 ```sh
 ALCHEMY_SEPOLIA_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 DEPLOYER_SEPOLIA_PRIVATE_KEY=0xYOUR_PRIVATE_KEY
 ```
 
-__Step 3. hardhat.config.js__
+### Step 3. Update contracts/hardhat.config.js
 
 ```sh
 require("@nomicfoundation/hardhat-toolbox");
@@ -46,14 +46,14 @@ module.exports = {
 };
 ```
 
-__Step 4. Deploy contract__
+### Step 4. Deploy contract in Testnet (Sepolia)
 
 We are using Alchemy RPC host provider to deploy the contract.
 
 ```sh
 npx hardhat run scripts/deploy.js --network sepolia
 
-HelloWorld smartcontract deployed. Address:  0x857bc1DdfFd1f3272AAf41D08E73954F6d278882
+HelloWorld smartcontract deployed. Address:  0x857bc1DdfFd.......954F6d278882
 ```
 
 __HTTP Request Count by Method__
@@ -63,7 +63,7 @@ If the contract is deployed, next are the requests made to Alchemy.
 ![](helloworld-01-alchemy-request-deploy-contract.png)
 
 
-__step 5. Update React application__
+### Step 5. Update React application
 
 Changes:
 - Deployment-ready structure
@@ -224,13 +224,13 @@ export default App;
 ```
 
 
-__Step 6. Deploy and run__
+### Step 6. Deploy and run
 
 ```sh
 pnpm dev
 ```
 
-__Step 7. Connect your MetaMask to Sepolia__
+### Step 7. Connect your MetaMask to Testnet (Sepolia)
 
 Once configured, interact with the React App.
 

@@ -128,7 +128,7 @@ const CONTRACT_ADDRESS = contractData.address;
 const ABI = [
   "function message() view returns (string)",
   "function setMessage(string _newMessage)",
-  "event MessageUpdated(string newMessage)" // afegit per escoltar l'event
+  "event MessageUpdated(string newMessage)" // Added to listen for event. See MessageUpdated in HelloWorld.sol
 ];
 
 function App() {
@@ -149,11 +149,11 @@ function App() {
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
-        // 1. Llegir el missatge actual
+        // 1. Read the current message
         const msg = await contract.message();
         setMessage(msg);
 
-        // 2. Escoltar l'event "MessageUpdated"
+        // 2. Listen the event "MessageUpdated"
         contract.on("MessageUpdated", (newMsg: string) => {
           console.log("📢 Event received:", newMsg);
           setMessage(newMsg);
@@ -167,7 +167,7 @@ function App() {
 
     init();
 
-    // 3. Cleanup per evitar múltiples subscripcions
+    // 3. Cleanup to avoid multiple subscriptions
     return () => {
       provider.getSigner().then((signer) => {
         const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
@@ -230,9 +230,9 @@ If you didn't do that, you will have next error:
 > Error: could not decode result data (value="0x", info={ "method": "message", ... })
 
 
-The, you should configure the right network and configure MetaMask.
+Then, you should configure the right network and configure MetaMask.
 
-- In MetaMask select the Hardhat Network
-- Import Hardhat test wallets into MetaMask which have funds
+- In MetaMask select the Hardhat Network.
+- Import Hardhat test wallets into MetaMask which have funds.
 - Repeat the transaction on the application and make sure MetaMask has the right network and account.
 

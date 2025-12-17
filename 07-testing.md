@@ -6,6 +6,8 @@ Requirements:
 - A dApp up and running
 - Metamask configured with the dApp
 
+## Steps
+
 ### 1. Configure the Test environment
 
 
@@ -31,7 +33,7 @@ pnpm exec playwright install
 ```
 
 
-__Step 04. Create and configure frontend/tsconfig.synpress.json__
+__Step 03. Create and configure frontend/tsconfig.synpress.json__
 
 ```json
 {
@@ -40,7 +42,7 @@ __Step 04. Create and configure frontend/tsconfig.synpress.json__
 }
 ```
 
-__Step 05. Update my-app/tsconfig.app.json__
+__Step 04. Update my-app/tsconfig.app.json__
 
 Make sure to have these values in `my-app/tsconfig.app.json`:
 
@@ -60,7 +62,8 @@ Make sure to have these values in `my-app/tsconfig.app.json`:
 
 ### 2. Configure Playwright and Synpress
 
-__Step 06. Configure playwright.config.ts in apps/frontend/__
+
+__Step 05. Configure playwright.config.ts in apps/frontend/__
 
 > Only needed if want to customize playwright setup and keep separate from app.spec.ts
 
@@ -91,7 +94,7 @@ export default defineConfig({
 ```
  -->
 
-__Step 07. Create synpress.config.js in apps/frontend/__
+__Step 06. Create synpress.config.js in apps/frontend/__
 
 > Only needed if using Synpress to test advanced scenarios with wallets, etc. In that case, Synpress should be integrated with Playwright and create `synpress.config.js` file.
 
@@ -112,7 +115,7 @@ export default defineConfig({
 
 ### 3. Write a simple E2E tests
 
-__Step 09. Create simple test at tests/e2e/app.spec.ts__
+__Step 07. Create simple test at tests/e2e/app.spec.ts__
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -123,9 +126,9 @@ test('should display correct title', async ({ page }) => {
 });
 ```
 
-### 5. Execute the tests
+### 4. Execute the tests
 
-__Step 10. Add script to apps/frontend/package.json__
+__Step 08. Add script to apps/frontend/package.json__
 
 ```json
 ...
@@ -136,7 +139,7 @@ __Step 10. Add script to apps/frontend/package.json__
   }
 ...
 ```
-__Step 11. Run tests in terminal__
+__Step 09. Run tests in terminal__
 
 ```sh
 cd my-dapp/apps/frontend

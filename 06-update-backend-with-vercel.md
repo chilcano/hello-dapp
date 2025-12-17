@@ -3,10 +3,10 @@
 
 ## Steps
 
-__Step 1. Add Vercel config__
+### Step 1. Add Vercel config in apps/backend/package.json
 
 
-* Update `scripts` section:
+* Update the `scripts` section of `apps/backend/package.json`:
 
 From:
 ```json
@@ -36,7 +36,9 @@ To:
 ...
 ```
 
-__Step 2. Update the backend/tsconfig.json__
+### Step 2. Update the apps/backend/tsconfig.json
+
+* Make sure you have these values:
 
 ```json
 {
@@ -52,7 +54,9 @@ __Step 2. Update the backend/tsconfig.json__
 }
 ```
 
-__Step 3. Optionally, add vercel.json to backend__
+### Step 3. Optionally, add vercel.json to backend
+
+* This will prepare the configuration to deploy the backend on Vercel.
 
 ```sh
 nano apps/backend/vercel.json
@@ -77,9 +81,9 @@ nano apps/backend/vercel.json
 }
 ```
 
-__Step 4. Build and run__
+### Step 4. Build and run
 
-* Before we used `pnpm start` which is `ts-node index.ts`. Once updated `backend/package.json`, run next:
+* Before we used `pnpm start` which is `ts-node index.ts`. Once updated `backend/package.json`, we can run again the next command to build and run the backend:
 
 ```sh
 ## Compile code and generate dist/

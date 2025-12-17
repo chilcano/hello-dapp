@@ -1,4 +1,4 @@
-# 01. Setup Development environment
+# 01. Setup a dApp development environment
 
 ## 1. Project structure
 
@@ -61,7 +61,7 @@ my-app/.
 18 directories, 34 files
 ```
 
-## 2. Steps
+## 2. Setup steps
 
 
 ```sh

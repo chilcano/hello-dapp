@@ -1,15 +1,15 @@
-# 05. Implement a serverless API in Frontend to call Alchemy
+# 05. Implement a serverless API in frontend to call Alchemy
 
 ## Steps
 
-__Step 1. Install deps__
+### Step 1. Install deps in apps/frontend/api
 
 ```sh
 mkdir apps/frontend/api && cd apps/frontend/api
 pnpm add @vercel/node ethers 
 ```
 
-__Step 2. Create getGasPrice.ts__
+### Step 2. Create apps/frontend/api/getGasPrice.ts
 
 ```ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 ```
 
-__Step 3. Update frontend/App.tsx__
+### Step 3. Update apps/frontend/App.tsx
 
 ```ts
 ...
@@ -51,7 +51,8 @@ const fetchGasPrice = async () => {
 ...
 ```
 
-..and the `jsx` section of `frontend/App.tsx` add the next:
+..and the `jsx` section of `apps/frontend/App.tsx` add the next:
+
 ```ts
 ...
 <div style={{ marginTop: 20 }}>
@@ -66,7 +67,7 @@ const fetchGasPrice = async () => {
 ...
 ```
 
-__Step 4. Install and config Vercel to run frontend with serverless API__
+### Step 4. Install and config Vercel to run frontend with serverless API
 
 * Vite doesn't support natively serverless API.
 * The `pnpm dev` will run `vite` to serve the frontend and serverless will not work.
@@ -95,14 +96,15 @@ pnpm add -g vercel
 }
 ```
 
-__Step 5. Run Vercel locally to server frontend and serverless API__
+### Step 5. Run Vercel locally to server frontend and serverless API
 
-* En la raíz del proyecto (por ejemplo, donde está tu ), ejecuta:
-* In the root dir (i.e. where the main pnpm-workspace.yaml or package.json are on) run:
+* In the root dir (i.e. where the `pnpm-workspace.yaml` or main `package.json` are on) run:
+
 ```sh
 cd my-app/
 vercel dev
 ```
+
 You will see:
 
 ```sh
@@ -132,7 +134,7 @@ Auto-detected Project Settings (Vite):
 > Ready! Available at http://localhost:3000
 ```
 
-__Step 6. Fixing request to Backend when running with Vercel__
+### Step 6. Fixing request to Backend when running with Vercel
 
 * If running in local, the request to backend will fail with `404` error because the proxy in frontend will not work with Vercel CLI.
 * To check if backend works, only run frontend using `pnpm dev` (Vite project). This will run frontend on `http://localhost:5173/`
