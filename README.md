@@ -1,4 +1,4 @@
-# A dApp using React + TypeScript + Vite
+# Building a dApp using React + TypeScript + Vite
 
 ## 1. Playing with Ethereum RPC API 
 
@@ -15,6 +15,13 @@
 * [05-add-serverless.md](05-add-serverless.md)
 * [06-update-backend-with-vercel.md](06-update-backend-with-vercel.md)
 * [07-testing.md](07-testing.md)
+
+### 2.1. Deploy dApp in Vercel
+
+* You will need a Vercel Free Plan account
+* Fork this project into your Github account in order to configure it.
+* From Vercel Admin UI, add your forked dapp and configure it properly.
+* Changes detected in your repo will be propagated in Vercel.
 
 ## 3. CI/CD automation
 
