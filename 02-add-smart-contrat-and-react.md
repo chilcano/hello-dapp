@@ -4,15 +4,25 @@
 
 ```sh
 ## 1. Create a contracts/ folder inside your existing React app and initialize Hardhat
-cd my-app
+cd hello-dapp/my-app
 mkdir contracts && cd contracts
 pnpm init -p
-pnpm add -D hardhat
+
+# Important. This project works with Hardhat 2.25.0 (latest is 3.1.0 and breaks process)
+pnpm add -D hardhat@2.25.0 @nomicfoundation/hardhat-toolbox@6.0.0
+npx hardhat --version
+2.25.0
+
 npx hardhat init
 
-# Select "Create a basic sample project" and accept defaults
+#? What do you want to do? … 
+#▸ Create a JavaScript project
+#  Create a TypeScript project
+#  Create a TypeScript project (with Viem)
+#  Create an empty hardhat.config.js
+#  Quit
 
-## 2. Replace the sample contract with HelloWorld.sol
+## 2. Remove Lock.sol (optional) and create new contract
 rm contracts/Lock.sol
 nano contracts/HelloWorld.sol
 ```
@@ -34,12 +44,10 @@ contract HelloWorld {
 ```
 
 ```sh
-## 3. Compile the contract
+## 3. Compile the all contracts, artifact folder will be created
 npx hardhat compile
 
-## 4. Replace the deploy script with one for HelloWorld
-
-## In Hardhat 2.21.0, scripts folder should be created
+## 4. Replace the deploy script with one for HelloWorld (In Hardhat 2.25.0 the scripts folder should be created)
 mkdir scripts
 cat << 'EOF' > scripts/deploy.js
 const hre = require("hardhat");
@@ -65,29 +73,33 @@ EOF
 ```
 
 ```sh
-## 5. Start the Hardhat local network
+## 5. Start the Hardhat local network. It'll show a list of fake wallets with ETH to make tests
 npx hardhat node
 ```
 
 ```sh
 ## 6. In a second terminal, deploy the contract to localhost
-cd my-app/contracts
+cd hello-dapp/my-app/contracts
 npx hardhat run scripts/deploy.js --network localhost
 
 HelloWorld deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
-```
 
-```sh
-## 7. Install ethers.js in your React app
-cd ../
-pnpm add ethers
-
-## 8. (Optional) Connect MetaMask to localhost
-# Add a network in MetaMask:
-# - Network Name: Hardhat
-# - RPC URL: http://localhost:8545
-# - Chain ID: 31337
-# Then import a Hardhat account using its private key from the terminal output
+# In the previous terminal 'npx hardhat node' you should see this:
+...
+eth_accounts
+hardhat_metadata (20)
+eth_blockNumber
+eth_getBlockByNumber
+eth_feeHistory
+eth_maxPriorityFeePerGas
+eth_sendTransaction
+  Contract deployment: HelloWorld
+  Contract address:    0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Transaction:         0x7800f2401631bd7c686cedfa7718e1e83b44edc28950c823f3ab97837e7278a5
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  Value:               0 ETH
+  Gas used:            445185 of 16777216
+  Block #1:            0x86bf691a191f3cba2f7b95d9064c628a122f53bdaaf86c32e2ad657a5f744541
 ```
 
 ## 02.2. Update React app to interact with contract
@@ -105,7 +117,7 @@ pnpm add ethers
 ### Step 1: Ensure ethers is installed
 
 ```sh
-cd my-app
+cd my-app/
 pnpm add ethers
 ```
 
@@ -216,23 +228,82 @@ function App() {
 export default App;
 ```
 
-### Step 3: Run the application
-
+### Step 3: Launch the React application
 
 ```sh
 pnpm dev
 ```
 
-### Step 4: Configure MetaMask with Local Hardhat Network and add import a Hardhat wallet
+You will have error because the `contract-address.json` file doesn't exist and should be created for `my-app/contracts/scripts/deploy.js`. So, update the `deploy.js` with this:
 
-If you didn't do that, you will have next error:
+```js
+const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
+
+async function main() {
+  const HelloWorld = await hre.ethers.getContractFactory("HelloWorld");
+  const hello = await HelloWorld.deploy();  
+  await hello.waitForDeployment();
+
+  // Since Hardhat v2.20+, using @nomicfoundation/hardhat-ethers, the returned contract by getContractFactory(...).deploy() 
+  // has been deployed automatically and don't have .deployed() like before.
+  //await hello.deployed();
+
+  // Get deployed address
+  const address = await hello.getAddress();
+  console.log("HelloWorld smartcontract deployed. Address: ", address);
+
+  const deployData = { address };
+
+  // Save in deployments/localhost.json
+  const deployPath = path.join(__dirname, "../deployments/localhost.json");
+  fs.mkdirSync(path.dirname(deployPath), { recursive: true });
+  fs.writeFileSync(deployPath, JSON.stringify(deployData, null, 2));
+
+  // Also copy to src/ to be used in React
+  const frontendPath = path.join(__dirname, "../../src/contract-address.json");
+  fs.writeFileSync(frontendPath, JSON.stringify(deployData, null, 2));
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+```
+Once update, deploy the contract and after that, run the React app.
+```sh
+cd contracts/
+npx hardhat run scripts/deploy.js --network localhost
+cd ..
+pnpm dev
+```
+
+### Step 4: Configure MetaMask with Local Hardhat Network and add a Hardhat wallet
+
+Be careful to approve the transaction from React application, because you **probably are using a wrong Network and wrong contract address**, before that requires be verified and updated accordingly.
+
+Or if you get the next error, then you need to configure your MetaMask.
 
 > Error: could not decode result data (value="0x", info={ "method": "message", ... })
 
+Then, you should configure the right blockchain network in MetaMask and use a proper wallet address with funds to perform the transaction.
 
-Then, you should configure the right network and configure MetaMask.
+**Configure Hardhat Network in Metamask** 
+1. Open MetaMask
+2. Click on `Networks`
+3. Click on `+ Add a custom network`
+4. Add next details: 
+  - Network Name: Hardhat Test
+  - Default RPC URL: http://localhost:8545
+  - Chain ID: 31337 (don't force to use `1337`)
+  - currency symbol: GO (don't force to use `ETH`)
+5. Save
 
-- In MetaMask select the Hardhat Network.
-- Import Hardhat test wallets into MetaMask which have funds.
-- Repeat the transaction on the application and make sure MetaMask has the right network and account.
-
+**Import a Hardhat Wallet Address into MetaMask**  
+1. Open MetaMask
+2. Click on left-top icon `Accounts`. 
+3. There, click on `Add wallet` button.
+4. Select the 2nd option called `Import an account`. 
+5. There you will add only one of 20 Hardhat private-key available.
+6. (Important) In MetaMask make sure to use Hardhat Wallet Account with the Hardhat Local Network. Without that, when you run the React application, you maybe is sending tokens to wrong address.

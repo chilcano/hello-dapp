@@ -61,7 +61,7 @@ my-app/.
 18 directories, 34 files
 ```
 
-## 2. Setup steps
+## 2. Steps
 
 
 ```sh
@@ -80,11 +80,16 @@ curl -fsSL https://get.pnpm.io/install.sh | sh -
 source ~/.bashrc
 
 ## 4. Create a React + TypeScript + Vite project
+mkdir hello-dapp/
 pnpm create vite my-app --template react-ts
 cd my-app
 pnpm install
+# Approve blocked build scripts if you see warnings (pnpm v10+)
+pnpm approve-builds
+# This run the server locally to test initial app
+pnpm dev
 
-## 5. Open project in VS Code and install recommended extensions
+## 5. Open VS Code and install recommended extensions
 code .
 # Recommended extensions:
 # - ESLint
@@ -97,20 +102,22 @@ code .
 ## 6. Set up ESLint and Prettier for linting and formatting
 pnpm add -D eslint prettier eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y
 
-## 7. Initialize Git and configure GitHub (optional)
+## 7. (Optional) Initialize Git and configure GitHub
 git init
 git config --global user.name "YourName"
-git config --global user.email "you@example.com"
-# Optional: authenticate GitHub CLI
-# gh auth login
+git config --global user.email "yourname@example.com"
+git remote add origin https://github.com/<user_name>/<repo_name>.git
+# Next command will ask for PAT
+git add .; git commit -m "chore: initial files added"; git push -f
 
-## 8. Create .env file for environment variables
+## 8. (Optional) Create .env file for environment variables
 echo "VITE_API_URL=https://api.yourdomain.com" > .env
 
 ## 9. Install and configure unit testing with Vitest
 pnpm add -D vitest @testing-library/react @testing-library/jest-dom jsdom
-# Replace vite.config.ts content with:
-cat << 'EOF' > vite.config.ts
+# Replace my-app/vite.config.ts content with:
+nano my-app/vite.config.ts
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -121,15 +128,14 @@ export default defineConfig({
     environment: 'jsdom',
   },
 })
-EOF
 
 ## 10. Run development server
 pnpm dev
 # Visit http://localhost:5173 in your browser
 
-## 11. Perform vulnerability scan with OWASP ZAP
+## 11. (Optional) Perform vulnerability scan with OWASP ZAP
 # Start the dev server with `pnpm dev`
-# Open OWASP ZAP and scan http://localhost:5173 using Spider or Active Scan
+# Open [OWASP ZAP](https://www.zaproxy.org/download/) and scan http://localhost:5173 using Spider or Active Scan
 
 ## 12. (Optional) Create a Node.js backend with Express + TypeScript
 mkdir backend && cd backend
@@ -137,10 +143,4 @@ pnpm init
 pnpm add express
 pnpm add -D typescript ts-node-dev @types/node @types/express
 npx tsc --init
-
-## 13. Approve blocked build scripts if you see warnings (pnpm v10+)
-pnpm approve-builds
-# Approve trusted packages like "esbuild" when prompted
-
 ```
-

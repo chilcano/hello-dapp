@@ -1,0 +1,67 @@
+name: push-wallet-keys-to-vercel
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: 'Vercel project name'
+        required: true
+      env_name:
+        description: 'Vercel environment name'
+        required: true
+      var_name:
+        description: 'Vercel variable name'
+        required: true
+
+jobs:
+  create_wallet:
+    runs-on: ubuntu-latest
+    env:
+      ENV_NAME: ${{ inputs.env_name || 'publicproduction' }}
+      VAR_NAME: ${{ inputs.var_name || 'TEST_WALLET_PRIVATE_KEY' }}
+      PROJECT_NAME: ${{ inputs.project_name || 'token-auction' }}
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        persist-credentials: false
+
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@8b0419c685ef46cb79ec93fbdc131174afceb730 # v1.6.0
+
+    - name: Setup Node
+      uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+      with:
+        node-version: 24
+
+    - name: Install Vercel cli
+      run: |
+        npm i -g vercel
+        vercel --version
+
+    - name: Generate Wallet Keys
+      id: create_wallet
+      run: |
+        # Generate wallet fully in memory
+        WALLET_JSON="$(cast wallet new --json)"
+        ADDRESS="$(jq -r '.[0].address' <<<"$WALLET_JSON")"
+        PRIVATE_KEY="$(jq -r '.[0].private_key' <<<"$WALLET_JSON")"
+        
+        # Pipe private key directly into Vercel (non-interactive)
+        vercel --token ${{ secrets.VERCEL_TOKEN }} link --yes --project ${PROJECT_NAME}
+        printf '%s' "$PRIVATE_KEY" | vercel --token ${{ secrets.VERCEL_TOKEN }} env add "${VAR_NAME}" "${ENV_NAME}" --sensitive
+        
+        # Immediate cleanup
+        unset PRIVATE_KEY WALLET_JSON
+
+        # Store address as output
+        echo "address=${ADDRESS}" >> $GITHUB_OUTPUT
+
+    - name: Show summary
+      env:
+        ADDRESS: ${{ steps.create_wallet.outputs.address }}
+      run: |
+        echo "# Ceremony Complete" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Vercel variable ${VAR_NAME} is set in environment ${ENV_NAME}" >> $GITHUB_STEP_SUMMARY
+        echo "Wallet Address is ${ADDRESS}" >> $GITHUB_STEP_SUMMARY

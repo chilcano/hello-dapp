@@ -41,3 +41,4 @@ coverage/
 .vercel
 
 apps/frontend/test-results
+.env*.local
