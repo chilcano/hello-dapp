@@ -25,8 +25,8 @@ pnpm add -D dotenv
 ### Step 2. Update contracts/.env setup
 
 ```sh
-ALCHEMY_SEPOLIA_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
-DEPLOYER_SEPOLIA_PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+ALCHEMY_SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
+WALLET_DEPLOYER_SEPOLIA_PRIVATE_KEY=0xYOUR_PRIVATE_KEY
 ```
 
 ### Step 3. Update contracts/hardhat.config.js
@@ -39,8 +39,8 @@ module.exports = {
   solidity: "0.8.28",
   networks: {
     sepolia: {
-      url: process.env.ALCHEMY_SEPOLIA_URL,
-      accounts: [process.env.DEPLOYER_SEPOLIA_PRIVATE_KEY],
+      url: process.env.ALCHEMY_SEPOLIA_RPC_URL,
+      accounts: [process.env.WALLET_DEPLOYER_SEPOLIA_PRIVATE_KEY],
     },
   },
 };
@@ -48,18 +48,15 @@ module.exports = {
 
 ### Step 4. Deploy contract in Testnet (Sepolia)
 
-We are using Alchemy RPC host provider to deploy the contract.
-
 ```sh
 npx hardhat run scripts/deploy.js --network sepolia
 
 HelloWorld smartcontract deployed. Address:  0x857bc1DdfFd.......954F6d278882
 ```
 
-__HTTP Request Count by Method__
-
-If the contract is deployed, next are the requests made to Alchemy.
-
+We are using Alchemy as RPC provider to deploy the contract.
+If the contract was deployed, then we should see some Ethereum Methods called and its counter increassed. 
+You should view similar image in your Alchemy (or Infura) account.
 ![](helloworld-01-alchemy-request-deploy-contract.png)
 
 
@@ -224,13 +221,23 @@ export default App;
 ```
 
 
-### Step 6. Deploy and run
+### Step 6. Deploy and run the React application
+
+Hardhad Local node is nor needed anymore because the contract was already deployed on Testnet (Sepolia)
 
 ```sh
+cd ..
 pnpm dev
 ```
 
 ### Step 7. Connect your MetaMask to Testnet (Sepolia)
 
 Once configured, interact with the React App.
-
+1. Make sure you have selected the Wallet with funds and right Network in MetaMask.
+2. In the React application, update the message and click on `Update`.
+3. MetaMask will ask to approve the transaction.
+4. Check the detais to be approved.
+5. Explore by contract, transaction address or hash using Sepolia Block Explorer: https://sepolia.etherscan.io
+For example:
+- My contract address: 0x755177A2f9B425409b2e6D4E1398912415a634C6
+- URL Etherscan: https://sepolia.etherscan.io/address/0x755177A2f9B425409b2e6D4E1398912415a634C6#code
