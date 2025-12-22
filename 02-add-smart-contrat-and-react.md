@@ -1,11 +1,10 @@
 # 02 - Add HelloWorld smart contract
 
-## 02.1. Create and deploy contract
+## 1. Create and deploy contract
 
 ```sh
 ## 1. Create a contracts/ folder inside your existing React app and initialize Hardhat
-cd hello-dapp/my-app
-mkdir contracts && cd contracts
+mkdir my-app/contracts && cd my-app/contracts
 pnpm init -p
 
 # Important. This project works with Hardhat 2.25.0 (latest is 3.1.0 and breaks process)
@@ -102,7 +101,7 @@ eth_sendTransaction
   Block #1:            0x86bf691a191f3cba2f7b95d9064c628a122f53bdaaf86c32e2ad657a5f744541
 ```
 
-## 02.2. Update React app to interact with contract
+## 2. Update React app to interact with contract
 
 ```sh
 ## Interact with the contract from React

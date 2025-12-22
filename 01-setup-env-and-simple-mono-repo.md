@@ -1,7 +1,8 @@
 # 01. Setup a dApp development environment
 
-## 1. Project structure
+## 1. Setup initial 
 
+### Project structure
 
 ```sh
 $ tree my-app/. -I node_modules
@@ -61,8 +62,7 @@ my-app/.
 18 directories, 34 files
 ```
 
-## 2. Steps
-
+### NodeJS environment setup
 
 ```sh
 ## 1. Update the system
@@ -78,69 +78,75 @@ node -v && npm -v
 ## 3. Install PNPM (faster alternative to npm/yarn)
 curl -fsSL https://get.pnpm.io/install.sh | sh -
 source ~/.bashrc
+```
 
-## 4. Create a React + TypeScript + Vite project
-mkdir hello-dapp/
-pnpm create vite my-app --template react-ts
-cd my-app
+## 2. Steps to create and deploy a React frontend application
+
+### Step 1 - Create a frontend application
+
+* Frontend will use Vite (not CRA) and ethers 6.x
+
+```sh
+## 1. Create a React + TypeScript + Vite project
+mkdir my-app/apps/frontend/ && cd my-app/apps/frontend
+pnpm create vite@latest . --template react-ts
 pnpm install
 # Approve blocked build scripts if you see warnings (pnpm v10+)
 pnpm approve-builds
-# This run the server locally to test initial app
-pnpm dev
 
-## 5. Open VS Code and install recommended extensions
-code .
-# Recommended extensions:
-# - ESLint
-# - Prettier
-# - React Developer Tools
-# - TypeScript Hero
-# - GitLens
-# - DotENV
-
-## 6. Set up ESLint and Prettier for linting and formatting
-pnpm add -D eslint prettier eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y
-
-## 7. (Optional) Initialize Git and configure GitHub
-git init
-git config --global user.name "YourName"
-git config --global user.email "yourname@example.com"
-git remote add origin https://github.com/<user_name>/<repo_name>.git
-# Next command will ask for PAT
-git add .; git commit -m "chore: initial files added"; git push -f
-
-## 8. (Optional) Create .env file for environment variables
-echo "VITE_API_URL=https://api.yourdomain.com" > .env
-
-## 9. Install and configure unit testing with Vitest
-pnpm add -D vitest @testing-library/react @testing-library/jest-dom jsdom
-# Replace my-app/vite.config.ts content with:
-nano my-app/vite.config.ts
-
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-  },
-})
-
-## 10. Run development server
-pnpm dev
-# Visit http://localhost:5173 in your browser
-
-## 11. (Optional) Perform vulnerability scan with OWASP ZAP
-# Start the dev server with `pnpm dev`
-# Open [OWASP ZAP](https://www.zaproxy.org/download/) and scan http://localhost:5173 using Spider or Active Scan
-
-## 12. (Optional) Create a Node.js backend with Express + TypeScript
-mkdir backend && cd backend
-pnpm init
-pnpm add express
-pnpm add -D typescript ts-node-dev @types/node @types/express
-npx tsc --init
+## 2. Install deps
+pnpm add ethers@6.15.0
 ```
+
+### Step 2 – Update/Verify package.json
+
+Make sure the important parts look like this and do NOT add comments:
+
+```json
+{
+  "name": "frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  ...
+}
+```
+
+### Step 3 – Create frontend .env (local)
+
+```sh
+cat << 'EOF' > .env
+VITE_ALCHEMY_SEPOLIA_URL=https://eth-sepolia.g.alchemy.com/v2/your-api-key
+EOF
+```
+
+### Step 4 – Add contract address file
+
+* Make sure the `src/contract-address.json` has been created when deploying the contract. Otherwise, you can create it:
+
+```sh
+cat << 'EOF' > src/contract-address.json
+{
+  "address": "0xYOUR_DEPLOYED_CONTRACT_ADDRESS"
+}
+EOF
+```
+
+### Step 5 - Run the initial frontend application
+
+```sh
+pnpm dev
+```
+
+### Step 6 – Update src/App.tsx to work with deployed contract and MetaMask
+
+* The `src/App.tsx` will be updated accordingly in the next phase.
+
+### Step 7 - (Optional) Perform vulnerability scan with OWASP ZAP
+
+* Start the dev server with `pnpm dev`
+* Open [OWASP ZAP](https://www.zaproxy.org/download/) and scan http://localhost:5173 using Spider or Active Scan
