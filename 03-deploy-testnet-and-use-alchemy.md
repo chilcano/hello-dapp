@@ -63,9 +63,18 @@ You should view similar image in your Alchemy (or Infura) account.
 ### Step 5. Update React application
 
 Changes:
+- Create an .env file in frontend
 - Deployment-ready structure
 - Balance fetch from Alchemy
 - Smart contract interaction (read/write)
+
+**Update my-app/apps/frontend/.env**
+
+```sh
+VITE_ALCHEMY_SEPOLIA_URL=https://eth-sepolia.g.alchemy.com/v2/your-api-key
+```
+
+**Update my-app/apps/frontend/src/App.tsx**
 
 ```ts
 import { useEffect, useState } from 'react';
@@ -161,6 +170,7 @@ function App() {
       const alchemyProvider = new ethers.JsonRpcProvider(import.meta.env.VITE_ALCHEMY_SEPOLIA_URL);
       const balanceWei = await alchemyProvider.getBalance(CONTRACT_ADDRESS);
       const balanceEth = ethers.formatEther(balanceWei);
+      console.log("Querying RPC to get contract balance:", import.meta.env.VITE_ALCHEMY_SEPOLIA_URL);
       setBalance(balanceEth);
     } catch (err) {
       console.error("Error fetching contract balance:", err);

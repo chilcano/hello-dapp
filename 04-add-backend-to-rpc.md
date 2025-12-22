@@ -138,25 +138,32 @@ pnpm start
 Backend API listening on port 3001
 ```
 
-### Step 7. Update frontend/App.tsx to call to backend
+### Step 7. Update frontend/src/App.tsx to call to backend
 
 ```ts
-const fetchLastBlockFromBackend = async () => {
-  try {
-    const res = await fetch('http://localhost:3001/api/getLastBlock');
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+  const fetchLastBlockFromBackend = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/api/getLastBlock');
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      alert(`Last block number: ${data.blockNumber}`);
+    } catch {
+      alert('Error fetching last block');
     }
-    const data = await res.json();
-    alert(`Last block number: ${data.blockNumber}`);
-  } catch {
-    alert('Error fetching last block');
-  }
-};
+  };
 
-...
+  return (
+    <div style={{ padding: 20 }}>
+    ...
+      <hr/>
+      <button onClick={fetchLastBlockFromBackend}>Get Last Block (via Alchemy securely)</button>
+    </div>
+  );
+}
 
-<button onClick={fetchLastBlockFromBackend}>Get Last Block (via Alchemy securely)</button>
+export default App;
 ```
 
 ### Step 8. Run the full application to test integration

@@ -1,4 +1,4 @@
-# 02 - Add HelloWorld smart contract
+# 02 - Add HelloWorld smart contract and update Frontend
 
 ## 1. Create and deploy contract
 
@@ -101,7 +101,7 @@ eth_sendTransaction
   Block #1:            0x86bf691a191f3cba2f7b95d9064c628a122f53bdaaf86c32e2ad657a5f744541
 ```
 
-## 2. Update React app to interact with contract
+## 2. Update React app to interact with the contract
 
 ```sh
 ## Interact with the contract from React
@@ -116,8 +116,8 @@ eth_sendTransaction
 ### Step 1: Ensure ethers is installed
 
 ```sh
-cd my-app/
-pnpm add ethers
+cd my-app/apps/frontend
+pnpm add ethers@6.15.0
 ```
 
 ### Step 2: Replace the contents of src/App.tsx with:
@@ -233,7 +233,7 @@ export default App;
 pnpm dev
 ```
 
-You will have error because the `contract-address.json` file doesn't exist and should be created for `my-app/contracts/scripts/deploy.js`. So, update the `deploy.js` with this:
+* You will have error because the `contract-address.json` file doesn't exist and should be created for `my-app/contracts/scripts/deploy.js`. So, update the `deploy.js` with this:
 
 ```js
 const hre = require("hardhat");
@@ -260,8 +260,8 @@ async function main() {
   fs.mkdirSync(path.dirname(deployPath), { recursive: true });
   fs.writeFileSync(deployPath, JSON.stringify(deployData, null, 2));
 
-  // Also copy to src/ to be used in React
-  const frontendPath = path.join(__dirname, "../../src/contract-address.json");
+  // Also copy to frontend/src/ to be used in React
+  const frontendPath = path.join(__dirname, "../../apps/frontend/src/contract-address.json");
   fs.writeFileSync(frontendPath, JSON.stringify(deployData, null, 2));
 }
 
@@ -270,11 +270,16 @@ main().catch((error) => {
   process.exitCode = 1;
 });
 ```
-Once update, deploy the contract and after that, run the React app.
+
+Once updated, deploy the contract.
 ```sh
-cd contracts/
+cd my-app/contracts/
 npx hardhat run scripts/deploy.js --network localhost
-cd ..
+```
+
+.. and after that, run the React app again.
+```sh
+cd my-app/apps/frontend
 pnpm dev
 ```
 

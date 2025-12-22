@@ -22,8 +22,8 @@ async function main() {
   fs.mkdirSync(path.dirname(deployPath), { recursive: true });
   fs.writeFileSync(deployPath, JSON.stringify(deployData, null, 2));
 
-  // Also copy to src/ to be used in React
-  const frontendPath = path.join(__dirname, "../../src/contract-address.json");
+  // Also copy to frontend/src/ to be used in React
+  const frontendPath = path.join(__dirname, "../../apps/frontend/src/contract-address.json");
   fs.writeFileSync(frontendPath, JSON.stringify(deployData, null, 2));
 }
 
