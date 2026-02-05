@@ -25,13 +25,20 @@
 
 ## 3. CI/CD automation
 
-tbc
+* Compartir wallet-keys con Vercel
+  - [08-wallet-keys-to-vercel.md](08-wallet-keys-to-vercel.md)
+  - [Github workflow](.github/workflow/push-wallet-keys-to-vercel.yaml)
 
 ## 4. Securing SDLC dApp
 
-tbc
+* SCA (Trivy y Trivy Operator) & DAST (ZAP y Nuclei)
+  - https://github.com/chilcano/how-tos/blob/main/doc/sca/trivy_security_dependencies_checking.md
+  - https://github.com/chilcano/how-tos/blob/main/doc/playing_with_trivy_operator/trivy-operator-guide-README.md 
+* DAST (ZAP y Nuclei)
+  - https://github.com/chilcano/how-tos/blob/main/src/hacktools/project-discovery-nuclei.md 
+  - https://github.com/chilcano/how-tos/tree/main/doc/owasp-zap 
 
 ## 5. Monitoring dApp
 
-tbc
-
+- [Estrategia para Web3 Monitoring](10-web3-monitoring-plan.md)
+- [Example 1: Monitorizar un smart contract](10-example1-contract-mon.md)
