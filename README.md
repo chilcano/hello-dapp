@@ -38,6 +38,8 @@
   - https://github.com/chilcano/how-tos/blob/main/src/hacktools/project-discovery-nuclei.md 
   - https://github.com/chilcano/how-tos/tree/main/doc/owasp-zap 
 
+* [Lista más extensa de herramientas de seguridad opensource](https://holisticsecurity.io/sec-sdlc-oss-tool-list/)
+
 ## 5. Monitoring dApp
 
 - [Estrategia para Web3 Monitoring](10-web3-monitoring-plan.md)
