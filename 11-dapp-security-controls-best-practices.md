@@ -1,109 +1,139 @@
 # dApp Security Controls & Best Practices
 
-This document defines **mandatory security best practices and platform checks** for Web3 dApps built with Node.js / React / Next.js and deployed on Vercel.
-
-The objective is to **prevent DoS abuse, RPC exhaustion, data exposure, and cascading failures** observed in previous incidents.
-
----
-
-## 1. Application-Level Best Practices
-
-### 1.1 API & GraphQL Hardening
-- Disable GraphQL introspection in production.
-- Remove GraphQL playground / explorer endpoints from prod.
-- Enforce query depth and complexity limits.
-- Require authentication for schema access.
-- Enforce strict payload size limits and fail fast.
-
-### 1.2 Caching Strategy (Mandatory)
-- Cache all expensive or repeated onchain reads.
-- Never rely on frontend-only caching.
-- Use server-side or middleware cache (e.g. Redis / KV).
-- Set defensive TTLs (≥30s for heavy RPC calls).
-- Protect against cache stampede (request deduplication or locking).
-
-### 1.3 RPC Usage Discipline
-- Separate RPC endpoints:
-  - Client-facing RPCs (per-IP rate limited).
-  - Backend/middleware RPCs (strict global limits).
-- Never expose shared or high-limit RPCs to untrusted endpoints.
-- Handle RPC 429 / timeout errors gracefully.
+Baseline security and design guidelines for Web3 dApps (Next.js / Node.js) deployed on Vercel.
+Focused on preventing DoS abuse, RPC exhaustion, secret exposure, and cascading failures
+caused by monolithic frontend architectures.
 
 ---
 
-## 2. Rate Limiting & Abuse Controls
+## 1. Architecture & Application-Level Best Practices
 
-### 2.1 Edge / Middleware Controls
-- Apply rate limiting **before** serverless execution.
-- Use endpoint-specific limits (not only global limits).
-- Support feature flags to enable/disable limits safely.
-- Assume attackers will distribute traffic across IPs.
+### 1.1 Backend-for-Frontend (BFF) as the Core Pattern
 
-### 2.2 DoS Reality Check
-- Rate limiting alone is insufficient at high scale.
-- Assume attackers can exhaust Redis / KV write limits.
-- Protect **concurrency and execution**, not only request count.
+**Anti-pattern (root cause of most incidents):**
+- Monolithic frontend
+- Direct RPC calls from the browser
+- Secrets or high-privilege tokens exposed in UI
+- Thin Vercel middleware acting as pseudo-backend
+- Controls (auth, rate limit, cache) fragmented or missing
 
----
+**Recommended pattern:**
 
-## 3. Vercel-Specific Security Controls
+`Frontend → BFF (server-side) → RPC / Supabase / Redis / External services`
 
-### 3.1 Platform & Firewall
-- Enable Vercel Firewall rules for:
-  - Path-based protection.
-  - HTTP method restrictions (e.g. POST-only GraphQL).
-- Monitor concurrent execution saturation.
-- Enforce strict function timeout and memory limits.
 
-### 3.2 Bot & L7 Protection
-- Enable bot protection on public routes.
-- Use challenge-based protection during active attacks.
-- Prepare external L7 protection (e.g. Cloudflare) for attack periods.
+The BFF acts as the **single choke point** where all security and performance controls
+are consistently enforced.
+
+This BFF can be:
+- Vercel Serverless / Edge functions with strict limits, or
+- A separate backend service (preferred for high-throughput or mission-critical dApps)
 
 ---
 
-## 4. Observability & Incident Readiness
+### 1.2 Consequences of a Proper BFF (Design Guarantees)
 
-### 4.1 Logging & Monitoring
-- Centralize logs and alerts.
-- Never log secrets, private keys, or tokens.
-- Assume logs may become attacker-accessible if misconfigured.
+When the BFF is the only access path to sensitive resources, the following become
+**natural properties**, not ad-hoc fixes:
+
+- **Secrets never reach the UI**
+  - No private keys, admin tokens, service-role keys, or unscoped RPC credentials
+  - Use short-lived tokens and minimal scopes
+
+- **Centralized security controls**
+  - Authentication and authorization
+  - Rate limiting (per-IP, per-identity, per-route)
+  - Caching and deduplication
+  - Payload size and method restrictions
+
+- **Reduced blast radius**
+  - Expensive operations isolated
+  - Features can be degraded or disabled without full outage
+
+---
+
+### 1.3 API & GraphQL Hardening (Implemented at the BFF)
+
+- Disable GraphQL introspection in production
+- Remove playground / explorer endpoints from prod
+- Enforce query depth and complexity limits
+- Require authentication for schema access
+- Restrict HTTP methods (e.g. POST-only GraphQL)
+- Enforce strict payload size limits and fail fast
+
+---
+
+### 1.4 Caching Strategy (Mandatory, Server-Side)
+
+- Cache all expensive or repeated onchain reads at the BFF layer
+- Never rely on frontend-only caching for protection
+- Use Redis / KV with:
+  - Defensive TTLs (≥30s for heavy RPC calls)
+  - Stampede protection (deduplication / locking)
+- Monitor cache MISS storms and protect upstream dependencies
+
+---
+
+### 1.5 RPC Usage Discipline
+
+- Separate RPC endpoints and keys:
+  - Client-facing: strict per-IP limits, minimal privileges
+  - Server-side/BFF: strict global caps, monitored
+- Never proxy unlimited RPC calls from untrusted endpoints
+- Handle RPC 429 / timeout errors gracefully and degrade service
+
+---
+
+## 2. Vercel-Specific Security Controls
+
+### 2.1 Platform & Firewall
+- Enable Vercel Firewall rules:
+  - Path-based protection for sensitive routes
+  - Method restrictions (e.g. block GET on GraphQL)
+- Set conservative function timeout and memory limits
+- Monitor and alert on concurrent execution saturation
+
+### 2.2 Bot & L7 Protection
+- Enable bot protection on public routes
+- Prepare challenge-based protection for attack periods
+- Use external L7 defense (e.g. Cloudflare) during sustained attacks
+
+---
+
+## 3. Observability & Incident Readiness
+
+- Centralize logs and alerts
+- Never log secrets, private keys, tokens, or RPC credentials
+- Assume logs may become attacker-accessible if misconfigured
 - Alert on:
   - Traffic spikes
-  - RPC error rates
-  - Cache miss storms
-  - Concurrent execution exhaustion
+  - RPC error / 429 rates
+  - Cache MISS storms
+  - Concurrency exhaustion
 
-### 4.2 Kill Switches
-- Feature flags for:
-  - Rate limiting
-  - Expensive endpoints
-  - Onchain-heavy features
-- Ability to degrade functionality without full outage.
-
----
-
-## 5. Architecture & Design Principles
-
-- Avoid monolithic frontends handling critical workloads.
-- Treat dApps as **mission-critical Web2 systems**.
-- Assume adversarial traffic at all times.
-- Design for blast-radius containment and graceful degradation.
+### Kill Switches
+- Feature flags to:
+  - Disable expensive endpoints
+  - Increase caching or strict limits
+  - Temporarily degrade functionality
+- Test kill switches regularly
 
 ---
 
-## 6. Mandatory Security Checklist
+## 4. Mandatory Security Checklist
 
-- [ ] GraphQL introspection disabled in production
-- [ ] GraphQL playground removed
-- [ ] Edge rate limiting enabled
-- [ ] Heavy endpoints cached
-- [ ] RPC endpoints segmented
-- [ ] Bot protection enabled
-- [ ] Logs sanitized
+- [ ] BFF defined as the single control point
+- [ ] No secrets exposed to the UI
+- [ ] GraphQL introspection disabled; playground removed
+- [ ] Endpoint-specific rate limits enforced
+- [ ] Server-side caching with stampede protection
+- [ ] RPC endpoints segmented and monitored
+- [ ] Vercel Firewall and method restrictions enabled
+- [ ] Bot protection and attack mode ready
+- [ ] Logs sanitized and alerts configured
 - [ ] Kill switches tested
 
 ---
 
-**Security is layered, not optional.  
-If one control fails, another must absorb the impact.**
+**Most dApp security failures are architectural, not tooling-related.  
+Fix the shape of the system first; controls will follow naturally.**
