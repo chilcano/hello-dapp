@@ -11,7 +11,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate issue template marker (debug enabled)
+      - name: Validate issue template via labels + title (debug)
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -21,45 +21,74 @@ jobs:
             const repo = context.repo.repo;
             const issue_number = issue.number;
 
-            const body = (issue.body || "").trim();
             const title = (issue.title || "").trim();
+            const body = (issue.body || "").trim();
 
             const INVALID_LABEL = "invalid";
+            const GRAL_LABEL = "gral-issue-tpl";
+            const GRANT_LABEL = "grant-app-tpl";
 
-            const MARK_GRANT = "<!-- grant-application-tpl:v1 -->";
-            const MARK_GENERAL = "<!-- general-issue-tpl:v1 -->";
+            const labelNames = (issue.labels || []).map(l => l.name).filter(Boolean);
+            const hasGralLabel = labelNames.includes(GRAL_LABEL);
+            const hasGrantLabel = labelNames.includes(GRANT_LABEL);
 
-            const hasGrantMarker = body.includes(MARK_GRANT);
-            const hasGeneralMarker = body.includes(MARK_GENERAL);
+            const isIssueTitle = /^\[ISSUE\]/i.test(title);
+            const isGrantTitle = /^\[GRANT\]/i.test(title);
 
             console.log("---- DEBUG START ----");
+            console.log("Repo:", `${owner}/${repo}`);
             console.log("Issue number:", issue_number);
+            console.log("State:", issue.state);
             console.log("Title:", title);
             console.log("Body length:", body.length);
-            console.log("Has grant marker:", hasGrantMarker);
-            console.log("Has general marker:", hasGeneralMarker);
-            console.log("Full body preview (first 500 chars):");
-            console.log(body.substring(0, 500));
+            console.log("Labels:", labelNames.join(", ") || "(none)");
+            console.log("hasGralLabel:", hasGralLabel);
+            console.log("hasGrantLabel:", hasGrantLabel);
+            console.log("isIssueTitle:", isIssueTitle);
+            console.log("isGrantTitle:", isGrantTitle);
+            console.log("Actor:", context.payload.sender?.login || "(unknown)");
             console.log("---- DEBUG END ----");
 
-            const hasValidMarker = hasGrantMarker || hasGeneralMarker;
-
-            const alreadyInvalid = (issue.labels || []).some(l => l.name === INVALID_LABEL);
-
+            // Skip closed
             if (issue.state !== "open") {
-              console.log("Issue not open, skipping.");
+              console.log("Issue not open -> skipping.");
               return;
             }
 
+            // Skip if already invalid
+            const alreadyInvalid = labelNames.includes(INVALID_LABEL);
             if (alreadyInvalid) {
-              console.log("Issue already labeled invalid, skipping.");
+              console.log("Already labeled invalid -> skipping.");
               return;
             }
 
-            if (!hasValidMarker) {
+            // Determine "recognized template"
+            // Valid if:
+            //  - General: has gral-issue-tpl label AND title starts with [ISSUE]
+            //  - Grant: has grant-app-tpl label AND title starts with [GRANT]
+            const isGeneral = hasGralLabel && isIssueTitle;
+            const isGrant = hasGrantLabel && isGrantTitle;
 
-              console.log("No valid marker detected → marking as invalid.");
+            // Reject confusing/mixed signals (e.g., both labels, or label/title mismatch)
+            const reasons = [];
 
+            if (hasGralLabel && !isIssueTitle) reasons.push(`Label '${GRAL_LABEL}' requires title prefix '[ISSUE]'.`);
+            if (hasGrantLabel && !isGrantTitle) reasons.push(`Label '${GRANT_LABEL}' requires title prefix '[GRANT]'.`);
+
+            if (isIssueTitle && !hasGralLabel) reasons.push(`Title prefix '[ISSUE]' requires label '${GRAL_LABEL}'.`);
+            if (isGrantTitle && !hasGrantLabel) reasons.push(`Title prefix '[GRANT]' requires label '${GRANT_LABEL}'.`);
+
+            if (hasGralLabel && hasGrantLabel) reasons.push(`Issue has both '${GRAL_LABEL}' and '${GRANT_LABEL}' labels.`);
+
+            if (!isGeneral && !isGrant && reasons.length === 0) {
+              reasons.push("Issue does not match any supported template (missing required label/title).");
+            }
+
+            if (reasons.length > 0) {
+              console.log("Invalid issue detected. Reasons:");
+              for (const r of reasons) console.log(" -", r);
+
+              // Add invalid label
               try {
                 await github.rest.issues.addLabels({
                   owner,
@@ -67,27 +96,33 @@ jobs:
                   issue_number,
                   labels: [INVALID_LABEL]
                 });
+                console.log(`Applied label '${INVALID_LABEL}'.`);
               } catch (e) {
-                console.log("Error adding label:", e.message);
+                console.log(`Failed to apply label '${INVALID_LABEL}': ${e.message}`);
               }
+
+              // Comment
+              const msg =
+                "This issue was closed automatically because it does not follow a supported issue template.\n\n" +
+                reasons.map(r => `- ${r}`).join("\n") +
+                "\n\nPlease create a new issue using one of the available templates.";
 
               await github.rest.issues.createComment({
                 owner,
                 repo,
                 issue_number,
-                body:
-                  "This issue was closed automatically because it does not use a supported issue template.\n\n" +
-                  "Please create a new issue using one of the available templates."
+                body: msg
               });
+              console.log("Comment posted.");
 
+              // Close
               await github.rest.issues.update({
                 owner,
                 repo,
                 issue_number,
                 state: "closed"
               });
-
               console.log("Issue closed.");
             } else {
-              console.log("Valid template marker detected. Issue allowed.");
+              console.log("Issue is valid (recognized template). No action taken.");
             }

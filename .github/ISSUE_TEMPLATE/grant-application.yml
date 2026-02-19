@@ -1,8 +1,7 @@
 name: Grant Application
 description: Propose a project to the Zama Grant Program
 title: "[GRANT] <enter project name>"
-labels:
-  - "📄 Grant application"
+labels: ["grant-app-tpl", "needs-triage"]
 
 body:
   - type: markdown
