@@ -1,6 +1,6 @@
 name: General Issue
 description: Report a problem or request an improvement
-title: "[ISSUE] "
+title: "[ISSUE] <enter issue title>"
 labels: ["needs-triage"]
 
 body:
