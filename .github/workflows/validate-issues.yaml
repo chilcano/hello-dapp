@@ -8,104 +8,62 @@ permissions:
   issues: write
 
 jobs:
-  validate-issue:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate issue content
+      - name: Validate issue template marker
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issue = context.payload.issue;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const number = issue.number;
+            const issue_number = issue.number;
 
+            const body = (issue.body || "").trim();
             const title = (issue.title || "").trim();
-            const bodyRaw = (issue.body || "");
 
-            // ---- Config ----
-            const REQUIRED_TITLE_PREFIX = /^\[ISSUE\]:/i;
-            const IMPACT_PLACEHOLDER = "Select impact level";
             const INVALID_LABEL = "invalid";
 
-            // Regex for detecting URLs / images
-            const URL_RE = /\bhttps?:\/\/[^\s)>"]+/i;
-            const MD_IMAGE_RE = /!\[[^\]]*]\([^)]*\)/;
-            const HTML_IMAGE_RE = /<img\b[^>]*>/i;
+            const MARK_GRANT = "<!-- grant-application-tpl:v1 -->";
+            const MARK_GENERAL = "<!-- general-issue-tpl:v1 -->";
 
-            // Extract Description section
-            const DESCRIPTION_SECTION_RE = /###\s*Description\s*\n([\s\S]*?)(\n###|\s*$)/i;
+            const hasValidMarker =
+              body.includes(MARK_GRANT) ||
+              body.includes(MARK_GENERAL);
 
-            function stripImages(markdown) {
-              return (markdown || "")
-                .replace(/!\[[^\]]*]\([^)]*\)/g, " ")
-                .replace(/<img[^>]*>/gi, " ")
-                .replace(/https?:\/\/\S+\.(png|jpg|jpeg|webp|gif)(\?\S*)?/gi, " ")
-                .trim();
-            }
+            // If issue is already closed or already invalid, do nothing
+            const alreadyInvalid = (issue.labels || []).some(l => l.name === INVALID_LABEL);
+            if (issue.state !== "open" || alreadyInvalid) return;
 
-            const reasons = [];
+            if (!hasValidMarker) {
 
-            // 1) Block any URLs
-            if (URL_RE.test(bodyRaw)) {
-              reasons.push("URLs or links are not allowed in issues.");
-            }
-
-            // 2) Block any embedded images
-            if (MD_IMAGE_RE.test(bodyRaw) || HTML_IMAGE_RE.test(bodyRaw)) {
-              reasons.push("Embedded images are not allowed in issues.");
-            }
-
-            // 3) Require title prefix
-            if (!REQUIRED_TITLE_PREFIX.test(title)) {
-              reasons.push(`Title must start with [ISSUE]:`);
-            }
-
-            // 4) Impact must be selected
-            if (bodyRaw.includes(IMPACT_PLACEHOLDER)) {
-              reasons.push("Impact Level was not selected.");
-            }
-
-            // 5) Description must contain real text
-            const m = bodyRaw.match(DESCRIPTION_SECTION_RE);
-            const descriptionRaw = (m?.[1] || "").trim();
-            const descriptionTextOnly = stripImages(descriptionRaw);
-
-            if (!descriptionTextOnly) {
-              reasons.push("Description must include meaningful text.");
-            }
-
-            if (reasons.length > 0) {
-
-              // Add 'invalid' label
+              // Add invalid label
               try {
                 await github.rest.issues.addLabels({
                   owner,
                   repo,
-                  issue_number: number,
+                  issue_number,
                   labels: [INVALID_LABEL]
                 });
-              } catch (e) {
-                // ignore if label doesn't exist
-              }
+              } catch (e) {}
 
-              // Comment explaining why
-              const msg =
-                `This issue was closed automatically because it does not comply with the repository submission rules.\n\n` +
-                `Please review the issue template and resubmit properly.`;
-
+              // Comment
               await github.rest.issues.createComment({
                 owner,
                 repo,
-                issue_number: number,
-                body: msg
+                issue_number,
+                body:
+                  "This issue was closed automatically because it does not use a supported issue template.\n\n" +
+                  "Please create a new issue using one of the available templates."
               });
 
               // Close issue
               await github.rest.issues.update({
                 owner,
                 repo,
-                issue_number: number,
+                issue_number,
                 state: "closed"
               });
             }

@@ -4,6 +4,13 @@ title: "[ISSUE] "
 labels: ["needs-triage"]
 
 body:
+  - type: markdown
+    attributes:
+      value: |
+        <!-- general-issue-tpl:v1 -->
+        ## General Issue
+        Please complete the form below.
+
   - type: dropdown
     id: impact
     attributes:
