@@ -1,0 +1,94 @@
+name: validate-issues
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate issue template fields
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const number = issue.number;
+
+            const title = (issue.title || "").trim();
+            const bodyRaw = (issue.body || "");
+
+            // ---- Config ----
+            const REQUIRED_TITLE_PREFIX = /^\[ISSUE\]:/i;     // adjust if you want different
+            const IMPACT_PLACEHOLDER = "Select impact level";
+            const SPAM_LABEL = "spam";                        // create this label in repo
+
+            // Matches your Issue Form rendering (like your examples)
+            const DESCRIPTION_SECTION_RE = /###\s*Description\s*\n([\s\S]*?)(\n###|\s*$)/i;
+
+            // Strip images so "only images" doesn't count as meaningful description
+            function stripImages(markdown) {
+              return (markdown || "")
+                .replace(/!\[[^\]]*]\([^)]*\)/g, " ")               // ![alt](url)
+                .replace(/<img[^>]*>/gi, " ")                       // <img ...>
+                .replace(/https?:\/\/\S+\.(png|jpg|jpeg|webp|gif)(\?\S*)?/gi, " ")
+                .trim();
+            }
+
+            const reasons = [];
+
+            // 1) Require title prefix (optional but you asked for ["ISSUE"] style)
+            if (!REQUIRED_TITLE_PREFIX.test(title)) {
+              reasons.push(`Title must start with \`[ISSUE]:\` (current: "${title}")`);
+            }
+
+            // 2) Impact must be selected (not placeholder)
+            if (bodyRaw.includes(IMPACT_PLACEHOLDER)) {
+              reasons.push(`Impact Level not selected (still "${IMPACT_PLACEHOLDER}").`);
+            }
+
+            // 3) Description must contain meaningful text (not empty / not only images)
+            const m = bodyRaw.match(DESCRIPTION_SECTION_RE);
+            const descriptionRaw = (m?.[1] || "").trim();
+            const descriptionTextOnly = stripImages(descriptionRaw);
+
+            if (!descriptionTextOnly) {
+              reasons.push(`Description must include text (an image alone is not enough).`);
+            }
+
+            if (reasons.length > 0) {
+              // Add label (if it exists)
+              try {
+                await github.rest.issues.addLabels({
+                  owner, repo,
+                  issue_number: number,
+                  labels: [SPAM_LABEL]
+                });
+              } catch (e) {
+                // If label doesn't exist or permission issue, we still continue
+              }
+
+              // Comment
+              const msg =
+                `Closed automatically: issue does not meet required template rules.\n\n` +
+                reasons.map(r => `- ${r}`).join("\n") +
+                `\n\nPlease open a new issue and fill the template properly.`;
+
+              await github.rest.issues.createComment({
+                owner, repo,
+                issue_number: number,
+                body: msg
+              });
+
+              // Close
+              await github.rest.issues.update({
+                owner, repo,
+                issue_number: number,
+                state: "closed"
+              });
+            }
