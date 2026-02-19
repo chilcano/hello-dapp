@@ -28,7 +28,7 @@ jobs:
             // Optional: skip bots
             if (login.endsWith("[bot]")) return;
 
-            // Skip validation for trusted org members (optionally include CONTRIBUTOR)
+            // Skip validation for trusted org members (optional: this include CONTRIBUTOR)
             const TRUSTED = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
             if (TRUSTED.has(authorAssociation)) return;
 
