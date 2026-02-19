@@ -1,4 +1,4 @@
-name: validate-pullrequests-ext
+name: validate-pull-requests-ext
 
 on:
   pull_request:
@@ -38,7 +38,7 @@ jobs:
             const MD_IMAGE_RE = /!\[[^\]]*]\([^)]*\)/;
             const HTML_IMAGE_RE = /<img\b[^>]*>/i;
 
-            const IMPACT_CHECKED_RE = /-\s*\[[xX]\]\s*(critical|high|medium|low)\b/i;
+            const IMPACT_CHECKED_RE = /^[\s>*-]*[-*]\s*\[[xX]\]\s*(critical|high|medium|low)\b/im;
 
             const invalid =
               !IMPACT_CHECKED_RE.test(body) ||
