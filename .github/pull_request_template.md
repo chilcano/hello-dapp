@@ -1,10 +1,10 @@
-## Summary OUT
+## Summary
 
 Briefly describe the changes introduced by this pull request.
 
 ---
 
-## Impact Level OUT
+## Impact Level
 
 Select one:
 
@@ -17,8 +17,4 @@ Select one:
 
 ## Notes for Reviewers
 
-Provide any additional context that reviewers should be aware of:
-- Design decisions
-- Trade-offs
-- Known limitations
-- Follow-up work (if any)
+Provide any additional context that reviewers should be aware of.
