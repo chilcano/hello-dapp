@@ -1,7 +1,7 @@
 name: General Issue
 description: Report a problem or request an improvement
 title: "[ISSUE] <enter issue title>"
-labels: ["gral-issue-tpl", "needs-triage"]
+labels: ["gral-issue-tpl"]
 
 body:
   - type: markdown
