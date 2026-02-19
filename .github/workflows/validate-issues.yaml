@@ -11,7 +11,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate issue template via labels + title (debug)
+      - name: Validate issues (labels + title) with logs
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -25,15 +25,13 @@ jobs:
             const body = (issue.body || "").trim();
 
             const INVALID_LABEL = "invalid";
-            const GRAL_LABEL = "gral-issue-tpl";
-            const GRANT_LABEL = "grant-app-tpl";
+            const LABEL_TPL_GRAL_ISSUE = "tpl-gral-issue";
+            const LABEL_TPL_GRANT_APP = "tpl-grant-app";
 
             const labelNames = (issue.labels || []).map(l => l.name).filter(Boolean);
-            const hasGralLabel = labelNames.includes(GRAL_LABEL);
-            const hasGrantLabel = labelNames.includes(GRANT_LABEL);
-
-            const isIssueTitle = /^\[ISSUE\]/i.test(title);
-            const isGrantTitle = /^\[GRANT\]/i.test(title);
+            const hasLabelGralIssue = labelNames.includes(LABEL_TPL_GRAL_ISSUE);
+            const hasLabelGrantApp = labelNames.includes(LABEL_TPL_GRANT_APP);
+            const alreadyInvalid = labelNames.includes(INVALID_LABEL);
 
             console.log("---- DEBUG START ----");
             console.log("Repo:", `${owner}/${repo}`);
@@ -42,87 +40,101 @@ jobs:
             console.log("Title:", title);
             console.log("Body length:", body.length);
             console.log("Labels:", labelNames.join(", ") || "(none)");
-            console.log("hasGralLabel:", hasGralLabel);
-            console.log("hasGrantLabel:", hasGrantLabel);
-            console.log("isIssueTitle:", isIssueTitle);
-            console.log("isGrantTitle:", isGrantTitle);
+            console.log("hasLabelGralIssue:", hasLabelGralIssue);
+            console.log("hasLabelGrantApp:", hasLabelGrantApp);
+            console.log("alreadyInvalid:", alreadyInvalid);
             console.log("Actor:", context.payload.sender?.login || "(unknown)");
             console.log("---- DEBUG END ----");
 
-            // Skip closed
             if (issue.state !== "open") {
               console.log("Issue not open -> skipping.");
               return;
             }
-
-            // Skip if already invalid
-            const alreadyInvalid = labelNames.includes(INVALID_LABEL);
             if (alreadyInvalid) {
-              console.log("Already labeled invalid -> skipping.");
+              console.log("Already invalid -> skipping.");
               return;
             }
 
-            // Determine "recognized template"
-            // Valid if:
-            //  - General: has gral-issue-tpl label AND title starts with [ISSUE]
-            //  - Grant: has grant-app-tpl label AND title starts with [GRANT]
-            const isGeneral = hasGralLabel && isIssueTitle;
-            const isGrant = hasGrantLabel && isGrantTitle;
-
-            // Reject confusing/mixed signals (e.g., both labels, or label/title mismatch)
-            const reasons = [];
-
-            if (hasGralLabel && !isIssueTitle) reasons.push(`Label '${GRAL_LABEL}' requires title prefix '[ISSUE]'.`);
-            if (hasGrantLabel && !isGrantTitle) reasons.push(`Label '${GRANT_LABEL}' requires title prefix '[GRANT]'.`);
-
-            if (isIssueTitle && !hasGralLabel) reasons.push(`Title prefix '[ISSUE]' requires label '${GRAL_LABEL}'.`);
-            if (isGrantTitle && !hasGrantLabel) reasons.push(`Title prefix '[GRANT]' requires label '${GRANT_LABEL}'.`);
-
-            if (hasGralLabel && hasGrantLabel) reasons.push(`Issue has both '${GRAL_LABEL}' and '${GRANT_LABEL}' labels.`);
-
-            if (!isGeneral && !isGrant && reasons.length === 0) {
-              reasons.push("Issue does not match any supported template (missing required label/title).");
-            }
-
-            if (reasons.length > 0) {
-              console.log("Invalid issue detected. Reasons:");
-              for (const r of reasons) console.log(" -", r);
-
-              // Add invalid label
+            async function addInvalidLabel() {
               try {
                 await github.rest.issues.addLabels({
-                  owner,
-                  repo,
-                  issue_number,
+                  owner, repo, issue_number,
                   labels: [INVALID_LABEL]
                 });
                 console.log(`Applied label '${INVALID_LABEL}'.`);
               } catch (e) {
                 console.log(`Failed to apply label '${INVALID_LABEL}': ${e.message}`);
               }
+            }
 
-              // Comment
+            async function commentAndClose(reasons) {
               const msg =
-                "This issue was closed automatically because it does not follow a supported issue template.\n\n" +
-                reasons.map(r => `- ${r}`).join("\n") +
-                "\n\nPlease create a new issue using one of the available templates.";
+                "This issue was closed automatically because it does not follow the required title format.\n\n" +
+                "Please edit the title and re-open a new issue using the correct template.";
 
               await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number,
+                owner, repo, issue_number,
                 body: msg
               });
               console.log("Comment posted.");
 
-              // Close
               await github.rest.issues.update({
-                owner,
-                repo,
-                issue_number,
+                owner, repo, issue_number,
                 state: "closed"
               });
               console.log("Issue closed.");
+            }
+
+            // Must match exactly one template label
+            const reasons = [];
+            if (hasLabelGralIssue && hasLabelGrantApp) {
+              reasons.push(`Issue has both '${LABEL_TPL_GRAL_ISSUE}' and '${LABEL_TPL_GRANT_APP}' labels.`);
+            }
+            if (!hasLabelGralIssue && !hasLabelGrantApp) {
+              reasons.push(`Issue is missing template label ('${LABEL_TPL_GRAL_ISSUE}' or '${LABEL_TPL_GRANT_APP}').`);
+            }
+
+            // Title validation per template
+            if (hasLabelGralIssue && !hasLabelGrantApp) {
+              const isIssuePrefix = /^\[ISSUE\]/i.test(title);
+              if (!isIssuePrefix) reasons.push("General issues must start with `[ISSUE]`.");
+
+              // Disallow empty/placeholder titles
+              if (/^\[ISSUE\]\s*$/i.test(title)) {
+                reasons.push("Title cannot be only `[ISSUE]`.");
+              }
+              if (/^\[ISSUE\]\s*<enter issue title>\s*$/i.test(title)) {
+                reasons.push("Replace the placeholder `<enter issue title>` with a real title.");
+              }
+
+              // Also require some real text after the prefix
+              if (!/^\[ISSUE\]\s+\S+/i.test(title)) {
+                reasons.push("Title must include a real value after `[ISSUE]`.");
+              }
+            }
+
+            if (hasLabelGrantApp && !hasLabelGralIssue) {
+              const isGrantPrefix = /^\[GRANT\]/i.test(title);
+              if (!isGrantPrefix) reasons.push("Grant applications must start with `[GRANT]`.");
+
+              if (/^\[GRANT\]\s*$/i.test(title)) {
+                reasons.push("Title cannot be only `[GRANT]`.");
+              }
+              if (/^\[GRANT\]\s*<enter project name>\s*$/i.test(title)) {
+                reasons.push("Replace the placeholder `<enter project name>` with a real project name.");
+              }
+
+              if (!/^\[GRANT\]\s+\S+/i.test(title)) {
+                reasons.push("Title must include a real value after `[GRANT]`.");
+              }
+            }
+
+            if (reasons.length > 0) {
+              console.log("Invalid issue detected. Reasons:");
+              for (const r of reasons) console.log(" -", r);
+
+              await addInvalidLabel();
+              await commentAndClose(reasons);
             } else {
-              console.log("Issue is valid (recognized template). No action taken.");
+              console.log("Issue title is valid. No action taken.");
             }
