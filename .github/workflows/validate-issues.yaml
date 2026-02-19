@@ -8,7 +8,7 @@ permissions:
   issues: write
 
 jobs:
-  validate:
+  validate-issue:
     runs-on: ubuntu-latest
     steps:
       - name: Validate issue content
@@ -92,7 +92,7 @@ jobs:
               // Comment explaining why
               const msg =
                 `This issue was closed automatically because it does not comply with the repository submission rules.\n\n` +
-                `\n\nPlease review the issue template and resubmit properly.`;
+                `Please review the issue template and resubmit properly.`;
 
               await github.rest.issues.createComment({
                 owner,
