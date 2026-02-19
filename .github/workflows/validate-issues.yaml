@@ -11,7 +11,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate issue template marker
+      - name: Validate issue template marker (debug enabled)
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -29,17 +29,37 @@ jobs:
             const MARK_GRANT = "<!-- grant-application-tpl:v1 -->";
             const MARK_GENERAL = "<!-- general-issue-tpl:v1 -->";
 
-            const hasValidMarker =
-              body.includes(MARK_GRANT) ||
-              body.includes(MARK_GENERAL);
+            const hasGrantMarker = body.includes(MARK_GRANT);
+            const hasGeneralMarker = body.includes(MARK_GENERAL);
 
-            // If issue is already closed or already invalid, do nothing
+            console.log("---- DEBUG START ----");
+            console.log("Issue number:", issue_number);
+            console.log("Title:", title);
+            console.log("Body length:", body.length);
+            console.log("Has grant marker:", hasGrantMarker);
+            console.log("Has general marker:", hasGeneralMarker);
+            console.log("Full body preview (first 500 chars):");
+            console.log(body.substring(0, 500));
+            console.log("---- DEBUG END ----");
+
+            const hasValidMarker = hasGrantMarker || hasGeneralMarker;
+
             const alreadyInvalid = (issue.labels || []).some(l => l.name === INVALID_LABEL);
-            if (issue.state !== "open" || alreadyInvalid) return;
+
+            if (issue.state !== "open") {
+              console.log("Issue not open, skipping.");
+              return;
+            }
+
+            if (alreadyInvalid) {
+              console.log("Issue already labeled invalid, skipping.");
+              return;
+            }
 
             if (!hasValidMarker) {
 
-              // Add invalid label
+              console.log("No valid marker detected → marking as invalid.");
+
               try {
                 await github.rest.issues.addLabels({
                   owner,
@@ -47,9 +67,10 @@ jobs:
                   issue_number,
                   labels: [INVALID_LABEL]
                 });
-              } catch (e) {}
+              } catch (e) {
+                console.log("Error adding label:", e.message);
+              }
 
-              // Comment
               await github.rest.issues.createComment({
                 owner,
                 repo,
@@ -59,11 +80,14 @@ jobs:
                   "Please create a new issue using one of the available templates."
               });
 
-              // Close issue
               await github.rest.issues.update({
                 owner,
                 repo,
                 issue_number,
                 state: "closed"
               });
+
+              console.log("Issue closed.");
+            } else {
+              console.log("Valid template marker detected. Issue allowed.");
             }
