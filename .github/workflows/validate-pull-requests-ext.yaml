@@ -9,7 +9,7 @@ permissions:
   issues: write
 
 jobs:
-  validate-pr-ext:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR template fields (skip org members)
@@ -23,30 +23,45 @@ jobs:
             const prNumber = pr.number;
             const body = (pr.body || "");
             const authorAssociation = (pr.author_association || "").toUpperCase();
-            const login = (pr.user?.login || "").toLowerCase();
 
-            // Optional: skip bots
-            if (login.endsWith("[bot]")) return;
-
-            // Skip validation for trusted org members (optional: this include CONTRIBUTOR)
+            // Skip validation for org people / trusted contributors
             const TRUSTED = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
-            if (TRUSTED.has(authorAssociation)) return;
+            if (TRUSTED.has(authorAssociation)) {
+              core.info(`Skipping validation for trusted author_association=${authorAssociation}`);
+              return;
+            }
 
             const INVALID_LABEL = "invalid";
 
+            // Block URLs and images (like issues)
             const URL_RE = /\bhttps?:\/\/[^\s)>"]+/i;
             const MD_IMAGE_RE = /!\[[^\]]*]\([^)]*\)/;
             const HTML_IMAGE_RE = /<img\b[^>]*>/i;
 
-            const IMPACT_CHECKED_RE = /^[\s>*-]*[-*]\s*\[[xX]\]\s*(critical|high|medium|low)\b/im;
+            // Impact checkboxes: requires at least one checked
+            // Your PR template should have:
+            // - [ ] Low
+            // - [ ] Medium
+            // - [ ] High
+            // - [ ] Critical
+            const IMPACT_CHECKED_RE = /-\s*\[[xX]\]\s*(Low|Medium|High|Critical)\b/;
 
-            const invalid =
-              !IMPACT_CHECKED_RE.test(body) ||
-              URL_RE.test(body) ||
-              MD_IMAGE_RE.test(body) ||
-              HTML_IMAGE_RE.test(body);
+            const reasons = [];
 
-            if (invalid) {
+            if (!IMPACT_CHECKED_RE.test(body)) {
+              reasons.push("Impact Level must be selected (check one checkbox: Low/Medium/High/Critical).");
+            }
+
+            if (URL_RE.test(body)) {
+              reasons.push("URLs or links are not allowed in PR description.");
+            }
+
+            if (MD_IMAGE_RE.test(body) || HTML_IMAGE_RE.test(body)) {
+              reasons.push("Embedded images are not allowed in PR description.");
+            }
+
+            if (reasons.length > 0) {
+              // Label invalid
               try {
                 await github.rest.issues.addLabels({
                   owner,
@@ -54,11 +69,15 @@ jobs:
                   issue_number: prNumber,
                   labels: [INVALID_LABEL]
                 });
-              } catch (e) {}
+              } catch (e) {
+                // ignore if label missing
+              }
 
+              // Comment
               const msg =
                 `This PR was closed automatically because it does not comply with the repository submission rules.\n\n` +
-                `Please open a new PR and fill the template properly.`;
+                reasons.map(r => `- ${r}`).join("\n") +
+                `\n\nPlease open a new PR and fill the template properly.`;
 
               await github.rest.issues.createComment({
                 owner,
@@ -67,6 +86,7 @@ jobs:
                 body: msg
               });
 
+              // Close PR
               await github.rest.pulls.update({
                 owner,
                 repo,
