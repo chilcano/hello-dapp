@@ -12,7 +12,7 @@ jobs:
   validate-pr-ext:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate PR template fields (skip org members)
+      - name: Validate PR template fields (skip closing for org members)
         uses: actions/github-script@v7
         with:
           script: |
@@ -25,19 +25,25 @@ jobs:
             const authorAssociation = (pr.author_association || "").toUpperCase();
             const login = (pr.user?.login || "").toLowerCase();
 
-            // Optional: skip bots
-            if (login.endsWith("[bot]")) return;
+            // Optional: skip bots (dependabot, etc.)
+            if (login.endsWith("[bot]")) {
+              core.info(`Skipping bot PR: ${login}`);
+              return;
+            }
 
-            // Skip validation for trusted org members (optional: this include CONTRIBUTOR)
+            // Trusted users: we still VALIDATE (so you can test), but we won't close/label/comment.
             const TRUSTED = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
-            if (TRUSTED.has(authorAssociation)) return;
+            const isTrusted = TRUSTED.has(authorAssociation);
 
             const INVALID_LABEL = "invalid";
 
+            // Detect URLs + images
+            // (Covers https://..., plus <img ...> and markdown images)
             const URL_RE = /\bhttps?:\/\/[^\s)>"]+/i;
             const MD_IMAGE_RE = /!\[[^\]]*]\([^)]*\)/;
             const HTML_IMAGE_RE = /<img\b[^>]*>/i;
 
+            // Impact checkbox must be checked (case-insensitive), supports "-" or "*" bullets
             const IMPACT_CHECKED_RE = /^[\s>*-]*[-*]\s*\[[xX]\]\s*(critical|high|medium|low)\b/im;
 
             const invalid =
@@ -45,6 +51,11 @@ jobs:
               URL_RE.test(body) ||
               MD_IMAGE_RE.test(body) ||
               HTML_IMAGE_RE.test(body);
+
+            core.info(`PR#${prNumber} author_association=${authorAssociation} isTrusted=${isTrusted} invalid=${invalid}`);
+
+            // If invalid but trusted, do not enforce (no label/comment/close)
+            if (invalid && isTrusted) return;
 
             if (invalid) {
               try {
@@ -54,7 +65,9 @@ jobs:
                   issue_number: prNumber,
                   labels: [INVALID_LABEL]
                 });
-              } catch (e) {}
+              } catch (e) {
+                core.info(`Could not add label '${INVALID_LABEL}': ${e.message}`);
+              }
 
               const msg =
                 `This PR was closed automatically because it does not comply with the repository submission rules.\n\n` +
