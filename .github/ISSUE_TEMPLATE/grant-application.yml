@@ -1,0 +1,78 @@
+name: Grant Application
+description: Propose a project to the Zama Grant Program
+title: "[GRANT]: "
+labels:
+  - "📄 Grant application"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        <!-- grant-template:v1 -->
+        ## Zama Grant Program: Application
+        Please give as much information as possible about the project you would like to submit.
+
+  - type: dropdown
+    id: library
+    attributes:
+      label: Library targeted
+      description: Select the library your project targets.
+      options:
+        - Select a library
+        - fhEVM
+        - TFHE-rs
+        - Concrete
+        - Concrete ML
+        - Research
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact Level
+      description: How severe / important is the impact?
+      options:
+        - Select impact level
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true
+
+  - type: textarea
+    id: overview
+    attributes:
+      label: Overview
+      description: Short description (1–3 sentences).
+      placeholder: What are you proposing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Detailed description, scope, milestones/deliverables.
+      placeholder: What will you build? What are the deliverables?
+    validations:
+      required: true
+
+  - type: input
+    id: reward
+    attributes:
+      label: Reward estimate
+      description: Provide an estimate (include currency, e.g., "€5,000" or "USD 3,000").
+      placeholder: "e.g., €5,000"
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: Related links and references (optional)
+      description: Links to papers, articles, repos, previous work, etc.
+      placeholder: "Optional"
+    validations:
+      required: false
