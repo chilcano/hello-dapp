@@ -1,6 +1,6 @@
 name: Grant Application
 description: Propose a project to the Zama Grant Program
-title: "[GRANT]: "
+title: "[GRANT] <enter project name>"
 labels:
   - "📄 Grant application"
 
@@ -16,7 +16,7 @@ body:
     id: library
     attributes:
       label: Library targeted
-      description: What library is the project targeting?
+      description: 'What library is the project targeting?''
       options:
         - Select a library
         - fhEVM
@@ -31,7 +31,7 @@ body:
     id: overview
     attributes:
       label: Overview
-      description: Propose an overview: Short description of your project
+      description: 'Propose an overview: Short description of your project'
     validations:
       required: true
 
@@ -39,7 +39,7 @@ body:
     id: description
     attributes:
       label: Description
-      description: Propose a Description: Complete and detailed description of your project
+      description: 'Propose a Description: Complete and detailed description of your project'
     validations:
       required: true
 
@@ -47,7 +47,7 @@ body:
     id: reward
     attributes:
       label: Reward
-      description: Give an estimate of the grant you would like to received for this project (will be later validated by the Zama team)
+      description: 'Give an estimate of the grant you would like to received for this project (will be later validated by the Zama team)'
     validations:
       required: true
 
@@ -55,6 +55,6 @@ body:
     id: references
     attributes:
       label: Related links and references
-      description: Give any links that could help us learn more about your project (papers, articles, existing implementation…)
+      description: 'Give any links that could help us learn more about your project (papers, articles, existing implementation…)'
     validations:
       required: true
