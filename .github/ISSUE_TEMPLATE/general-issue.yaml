@@ -22,7 +22,7 @@ body:
     id: description
     attributes:
       label: Description
-      description: Clearly describe or detail the issue.
+      description: Clearly describe or detail the issue. (** No links or url are allowed**)
     validations:
       required: true
 
@@ -30,6 +30,6 @@ body:
     id: context
     attributes:
       label: Additional Context
-      description: Provide additional information such as Logs, screenshots, etc.
+      description: Provide additional information such as logs or traces. (** No links or url are allowed**)
     validations:
       required: false

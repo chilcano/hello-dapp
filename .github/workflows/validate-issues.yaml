@@ -11,7 +11,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate issue template fields
+      - name: Validate issue content
         uses: actions/github-script@v7
         with:
           script: |
@@ -24,70 +24,87 @@ jobs:
             const bodyRaw = (issue.body || "");
 
             // ---- Config ----
-            const REQUIRED_TITLE_PREFIX = /^\[ISSUE\]:/i;     // adjust if you want different
+            const REQUIRED_TITLE_PREFIX = /^\[ISSUE\]:/i;
             const IMPACT_PLACEHOLDER = "Select impact level";
-            const SPAM_LABEL = "spam";                        // create this label in repo
+            const INVALID_LABEL = "invalid";
 
-            // Matches your Issue Form rendering (like your examples)
+            // Regex for detecting URLs / images
+            const URL_RE = /\bhttps?:\/\/[^\s)>"]+/i;
+            const MD_IMAGE_RE = /!\[[^\]]*]\([^)]*\)/;
+            const HTML_IMAGE_RE = /<img\b[^>]*>/i;
+
+            // Extract Description section
             const DESCRIPTION_SECTION_RE = /###\s*Description\s*\n([\s\S]*?)(\n###|\s*$)/i;
 
-            // Strip images so "only images" doesn't count as meaningful description
             function stripImages(markdown) {
               return (markdown || "")
-                .replace(/!\[[^\]]*]\([^)]*\)/g, " ")               // ![alt](url)
-                .replace(/<img[^>]*>/gi, " ")                       // <img ...>
+                .replace(/!\[[^\]]*]\([^)]*\)/g, " ")
+                .replace(/<img[^>]*>/gi, " ")
                 .replace(/https?:\/\/\S+\.(png|jpg|jpeg|webp|gif)(\?\S*)?/gi, " ")
                 .trim();
             }
 
             const reasons = [];
 
-            // 1) Require title prefix (optional but you asked for ["ISSUE"] style)
+            // 1) Block any URLs
+            if (URL_RE.test(bodyRaw)) {
+              reasons.push("URLs or links are not allowed in issues.");
+            }
+
+            // 2) Block any embedded images
+            if (MD_IMAGE_RE.test(bodyRaw) || HTML_IMAGE_RE.test(bodyRaw)) {
+              reasons.push("Embedded images are not allowed in issues.");
+            }
+
+            // 3) Require title prefix
             if (!REQUIRED_TITLE_PREFIX.test(title)) {
-              reasons.push(`Title must start with \`[ISSUE]:\` (current: "${title}")`);
+              reasons.push(`Title must start with [ISSUE]:`);
             }
 
-            // 2) Impact must be selected (not placeholder)
+            // 4) Impact must be selected
             if (bodyRaw.includes(IMPACT_PLACEHOLDER)) {
-              reasons.push(`Impact Level not selected (still "${IMPACT_PLACEHOLDER}").`);
+              reasons.push("Impact Level was not selected.");
             }
 
-            // 3) Description must contain meaningful text (not empty / not only images)
+            // 5) Description must contain real text
             const m = bodyRaw.match(DESCRIPTION_SECTION_RE);
             const descriptionRaw = (m?.[1] || "").trim();
             const descriptionTextOnly = stripImages(descriptionRaw);
 
             if (!descriptionTextOnly) {
-              reasons.push(`Description must include text (an image alone is not enough).`);
+              reasons.push("Description must include meaningful text.");
             }
 
             if (reasons.length > 0) {
-              // Add label (if it exists)
+
+              // Add 'invalid' label
               try {
                 await github.rest.issues.addLabels({
-                  owner, repo,
+                  owner,
+                  repo,
                   issue_number: number,
-                  labels: [SPAM_LABEL]
+                  labels: [INVALID_LABEL]
                 });
               } catch (e) {
-                // If label doesn't exist or permission issue, we still continue
+                // ignore if label doesn't exist
               }
 
-              // Comment
+              // Comment explaining why
               const msg =
-                `Closed automatically: issue does not meet required template rules.\n\n` +
-                reasons.map(r => `- ${r}`).join("\n") +
-                `\n\nPlease open a new issue and fill the template properly.`;
+                `This issue was closed automatically because it does not comply with the repository submission rules.\n\n` +
+                `\n\nPlease review the issue template and resubmit properly.`;
 
               await github.rest.issues.createComment({
-                owner, repo,
+                owner,
+                repo,
                 issue_number: number,
                 body: msg
               });
 
-              // Close
+              // Close issue
               await github.rest.issues.update({
-                owner, repo,
+                owner,
+                repo,
                 issue_number: number,
                 state: "closed"
               });
