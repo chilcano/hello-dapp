@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "openai-security-best-practices@skills-curated": true
+  }
+}
