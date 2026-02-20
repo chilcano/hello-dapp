@@ -7,7 +7,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        <!-- grant-application-tpl:v1 -->
         ## Zama Grant Program: Application
         Please give us as much information as possible on the project you would like to submit. You can find inspiration from our existing list of grants.
 
